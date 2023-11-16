@@ -235,6 +235,7 @@ func (rm *ResourceMonitor) RegisterResource(t tokens.Type, name string, custom b
 	}
 	additionalSecretOutputs := make([]string, len(opts.AdditionalSecretOutputs))
 	for i, v := range opts.AdditionalSecretOutputs {
+		fmt.Println("additional secret output", i, v)
 		additionalSecretOutputs[i] = string(v)
 	}
 

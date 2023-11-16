@@ -921,6 +921,7 @@ func (ctx *Context) registerResource(
 
 		var resp *pulumirpc.RegisterResourceResponse
 		if options.URN != "" {
+			fmt.Println("get resource", options.URN)
 			resp, err = ctx.getResource(options.URN)
 			if err != nil {
 				logging.V(9).Infof("getResource(%s, %s): error: %v", t, name, err)
@@ -929,6 +930,7 @@ func (ctx *Context) registerResource(
 			}
 		} else {
 			logging.V(9).Infof("RegisterResource(%s, %s): Goroutine spawned, RPC call being made", t, name)
+			fmt.Println("additional secret outputs", inputs, inputs.additionalSecretOutputs)
 			resp, err = ctx.monitor.RegisterResource(ctx.ctx, &pulumirpc.RegisterResourceRequest{
 				Type:                    t,
 				Name:                    name,

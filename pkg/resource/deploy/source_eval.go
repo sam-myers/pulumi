@@ -1008,6 +1008,7 @@ func (rm *resmon) ReadResource(ctx context.Context,
 		additionalSecretOutputs = append(additionalSecretOutputs, resource.PropertyKey(name))
 	}
 
+	panic("addiotnalSecretOutputs")
 	event := &readResourceEvent{
 		id:                      id,
 		name:                    name,
@@ -1374,6 +1375,8 @@ func (rm *resmon) RegisterResource(ctx context.Context,
 		}
 	}
 
+	fmt.Println("propertyDependencies", req.GetAdditionalSecretOutputs())
+	fmt.Println("req", req)
 	additionalSecretOutputs := req.GetAdditionalSecretOutputs()
 
 	var deleteBeforeReplace *bool
