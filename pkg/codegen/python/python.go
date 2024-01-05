@@ -47,6 +47,11 @@ func PyName(name string) string {
 }
 
 func pyName(name string, legacy bool) string {
+	if strings.Contains(name, "_") {
+		// new style names are already snake case, just need to lower the uppercase acronyms.
+		return strings.ToLower(name)
+	}
+
 	// This method is a state machine with four states:
 	//   stateFirst - the initial state.
 	//   stateUpper - The last character we saw was an uppercase letter and the character before it

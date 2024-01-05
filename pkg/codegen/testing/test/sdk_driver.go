@@ -434,6 +434,10 @@ var PulumiPulumiSDKTests = []*SDKTest{
 		Directory:   "unions-inline",
 		Description: "Testing the use of unions/oneOf in the schema inline with the property definition.",
 	},
+	{
+		Directory:   "new-names",
+		Description: "Testing the use of new snake_case names and tokens.",
+	},
 }
 
 var genSDKOnly bool

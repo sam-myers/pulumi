@@ -111,6 +111,18 @@ func Title(s string) string {
 	return s
 }
 
+func goName(name string) string {
+	if strings.Contains(name, "_") {
+		parts := strings.Split(name, "_")
+		for i, part := range parts {
+			// Go doesn't do acronyms in capitals
+			parts[i] = Title(strings.ToLower(part))
+		}
+		return strings.Join(parts, "")
+	}
+	return Title(name)
+}
+
 func tokenToPackage(pkg schema.PackageReference, overrides map[string]string, tok string) string {
 	mod := pkg.TokenToModule(tok)
 	if override, ok := overrides[mod]; ok {
@@ -216,7 +228,7 @@ func (pkg *pkgContext) tokenToType(tok string) string {
 
 	mod, name := pkg.tokenToPackage(tok), components[2]
 
-	name = Title(name)
+	name = goName(name)
 	if modPkg, ok := pkg.packages[mod]; ok {
 		newName, renamed := modPkg.renamed[name]
 		if renamed {
@@ -269,7 +281,7 @@ func (pkg *pkgContext) tokenToEnum(tok string) string {
 
 	mod, name := pkg.tokenToPackage(tok), components[2]
 
-	name = Title(name)
+	name = goName(name)
 
 	if modPkg, ok := pkg.packages[mod]; ok {
 		newName, renamed := modPkg.renamed[name]
@@ -319,7 +331,7 @@ func (pkg *pkgContext) tokenToResource(tok string) string {
 
 	mod, name := pkg.tokenToPackage(tok), components[2]
 
-	name = Title(name)
+	name = goName(name)
 
 	if mod == pkg.mod {
 		return name
@@ -350,7 +362,7 @@ func tokenToModule(tok string) string {
 func tokenToName(tok string) string {
 	components := strings.Split(tok, ":")
 	contract.Assertf(len(components) == 3, "Token must have 3 components, got %d", len(components))
-	return Title(components[2])
+	return goName(components[2])
 }
 
 // disambiguatedResourceName gets the name of a resource as it should appear in source, resolving conflicts in the process.
@@ -1142,8 +1154,8 @@ func (pkg *pkgContext) genInputInterface(w io.Writer, name string) {
 	printComment(w, pkg.getInputUsage(name), false)
 	fmt.Fprintf(w, "type %sInput interface {\n", name)
 	fmt.Fprintf(w, "\tpulumi.Input\n\n")
-	fmt.Fprintf(w, "\tTo%sOutput() %sOutput\n", Title(name), name)
-	fmt.Fprintf(w, "\tTo%sOutputWithContext(context.Context) %sOutput\n", Title(name), name)
+	fmt.Fprintf(w, "\tTo%sOutput() %sOutput\n", goName(name), name)
+	fmt.Fprintf(w, "\tTo%sOutputWithContext(context.Context) %sOutput\n", goName(name), name)
 	fmt.Fprintf(w, "}\n\n")
 }
 
@@ -1168,8 +1180,8 @@ func (pkg *pkgContext) genEnumInputInterface(w io.Writer, name string, enumType 
 	printComment(w, enumUsage, false)
 	fmt.Fprintf(w, "type %sInput interface {\n", name)
 	fmt.Fprintf(w, "\tpulumi.Input\n\n")
-	fmt.Fprintf(w, "\tTo%sOutput() %sOutput\n", Title(name), name)
-	fmt.Fprintf(w, "\tTo%sOutputWithContext(context.Context) %sOutput\n", Title(name), name)
+	fmt.Fprintf(w, "\tTo%sOutput() %sOutput\n", goName(name), name)
+	fmt.Fprintf(w, "\tTo%sOutputWithContext(context.Context) %sOutput\n", goName(name), name)
 	fmt.Fprintf(w, "}\n\n")
 }
 
@@ -1295,11 +1307,11 @@ func genInputImplementationWithArgs(w io.Writer, genArgs genInputImplementationA
 
 	var hasToOutput bool
 	if genArgs.toOutputMethods {
-		fmt.Fprintf(w, "func (i %s) To%sOutput() %sOutput {\n", receiverType, Title(name), name)
-		fmt.Fprintf(w, "\treturn i.To%sOutputWithContext(context.Background())\n", Title(name))
+		fmt.Fprintf(w, "func (i %s) To%sOutput() %sOutput {\n", receiverType, goName(name), name)
+		fmt.Fprintf(w, "\treturn i.To%sOutputWithContext(context.Background())\n", goName(name))
 		fmt.Fprintf(w, "}\n\n")
 
-		fmt.Fprintf(w, "func (i %s) To%sOutputWithContext(ctx context.Context) %sOutput {\n", receiverType, Title(name), name)
+		fmt.Fprintf(w, "func (i %s) To%sOutputWithContext(ctx context.Context) %sOutput {\n", receiverType, goName(name), name)
 		fmt.Fprintf(w, "\treturn pulumi.ToOutputWithContext(ctx, i).(%sOutput)\n", name)
 		fmt.Fprintf(w, "}\n\n")
 
@@ -1309,7 +1321,7 @@ func genInputImplementationWithArgs(w io.Writer, genArgs genInputImplementationA
 			if genArgs.goPackageinfo.Generics == GenericsSettingSideBySide {
 				fmt.Fprintf(w, "func (i %s) ToOutput(ctx context.Context) pulumix.Output[%s] {\n", receiverType, elementType)
 				fmt.Fprintf(w, "\treturn pulumix.Output[%s]{\n", elementType)
-				fmt.Fprintf(w, "\t\tOutputState: i.To%sOutputWithContext(ctx).OutputState,\n", Title(name))
+				fmt.Fprintf(w, "\t\tOutputState: i.To%sOutputWithContext(ctx).OutputState,\n", goName(name))
 				fmt.Fprintf(w, "\t}\n")
 				fmt.Fprintf(w, "}\n\n")
 				hasToOutput = true
@@ -1324,11 +1336,11 @@ func genInputImplementationWithArgs(w io.Writer, genArgs genInputImplementationA
 	}
 
 	if genArgs.ptrMethods && !genArgs.usingGenericTypes {
-		fmt.Fprintf(w, "func (i %s) To%sPtrOutput() %sPtrOutput {\n", receiverType, Title(name), name)
-		fmt.Fprintf(w, "\treturn i.To%sPtrOutputWithContext(context.Background())\n", Title(name))
+		fmt.Fprintf(w, "func (i %s) To%sPtrOutput() %sPtrOutput {\n", receiverType, goName(name), name)
+		fmt.Fprintf(w, "\treturn i.To%sPtrOutputWithContext(context.Background())\n", goName(name))
 		fmt.Fprintf(w, "}\n\n")
 
-		fmt.Fprintf(w, "func (i %s) To%sPtrOutputWithContext(ctx context.Context) %sPtrOutput {\n", receiverType, Title(name), name)
+		fmt.Fprintf(w, "func (i %s) To%sPtrOutputWithContext(ctx context.Context) %sPtrOutput {\n", receiverType, goName(name), name)
 		if strings.HasSuffix(receiverType, "Args") {
 			fmt.Fprintf(w, "\treturn pulumi.ToOutputWithContext(ctx, i).(%[1]sOutput).To%[1]sPtrOutputWithContext(ctx)\n", name)
 		} else {
@@ -1342,7 +1354,7 @@ func genInputImplementationWithArgs(w io.Writer, genArgs genInputImplementationA
 			if genArgs.goPackageinfo.Generics == GenericsSettingSideBySide {
 				fmt.Fprintf(w, "func (i %s) ToOutput(ctx context.Context) pulumix.Output[*%s] {\n", receiverType, elementType)
 				fmt.Fprintf(w, "\treturn pulumix.Output[*%s]{\n", elementType)
-				fmt.Fprintf(w, "\t\tOutputState: i.To%sPtrOutputWithContext(ctx).OutputState,\n", Title(name))
+				fmt.Fprintf(w, "\t\tOutputState: i.To%sPtrOutputWithContext(ctx).OutputState,\n", goName(name))
 				fmt.Fprintf(w, "\t}\n")
 				fmt.Fprintf(w, "}\n\n")
 			}
@@ -1357,20 +1369,20 @@ func (pkg *pkgContext) genOutputType(w io.Writer, baseName, elementType string, 
 	fmt.Fprintf(w, "\treturn reflect.TypeOf((*%s)(nil)).Elem()\n", elementType)
 	fmt.Fprintf(w, "}\n\n")
 
-	fmt.Fprintf(w, "func (o %[1]sOutput) To%[2]sOutput() %[1]sOutput {\n", baseName, Title(baseName))
+	fmt.Fprintf(w, "func (o %[1]sOutput) To%[2]sOutput() %[1]sOutput {\n", baseName, goName(baseName))
 	fmt.Fprintf(w, "\treturn o\n")
 	fmt.Fprintf(w, "}\n\n")
 
-	fmt.Fprintf(w, "func (o %[1]sOutput) To%[2]sOutputWithContext(ctx context.Context) %[1]sOutput {\n", baseName, Title(baseName))
+	fmt.Fprintf(w, "func (o %[1]sOutput) To%[2]sOutputWithContext(ctx context.Context) %[1]sOutput {\n", baseName, goName(baseName))
 	fmt.Fprintf(w, "\treturn o\n")
 	fmt.Fprintf(w, "}\n\n")
 
 	if ptrMethods && !usingGenericTypes {
-		fmt.Fprintf(w, "func (o %[1]sOutput) To%[2]sPtrOutput() %[1]sPtrOutput {\n", baseName, Title(baseName))
-		fmt.Fprintf(w, "\treturn o.To%sPtrOutputWithContext(context.Background())\n", Title(baseName))
+		fmt.Fprintf(w, "func (o %[1]sOutput) To%[2]sPtrOutput() %[1]sPtrOutput {\n", baseName, goName(baseName))
+		fmt.Fprintf(w, "\treturn o.To%sPtrOutputWithContext(context.Background())\n", goName(baseName))
 		fmt.Fprintf(w, "}\n\n")
 
-		fmt.Fprintf(w, "func (o %[1]sOutput) To%[2]sPtrOutputWithContext(ctx context.Context) %[1]sPtrOutput {\n", baseName, Title(baseName))
+		fmt.Fprintf(w, "func (o %[1]sOutput) To%[2]sPtrOutputWithContext(ctx context.Context) %[1]sPtrOutput {\n", baseName, goName(baseName))
 		fmt.Fprintf(w, "\treturn o.ApplyTWithContext(ctx, func(_ context.Context, v %[1]s) *%[1]s {\n", elementType)
 		fmt.Fprintf(w, "\t\treturn &v\n")
 		fmt.Fprintf(w, "\t}).(%sPtrOutput)\n", baseName)
@@ -1944,7 +1956,7 @@ func (pkg *pkgContext) genOutputTypes(w io.Writer, genArgs genOutputTypesArgs) {
 				deref = "&"
 			}
 
-			funcName := Title(p.Name)
+			funcName := goName(p.Name)
 			// Avoid conflicts with Output interface for lifted attributes.
 			switch funcName {
 			case "IsSecret", "ElementType":
@@ -2429,7 +2441,7 @@ func (pkg *pkgContext) genResource(
 
 	// Emit resource methods.
 	for _, method := range r.Methods {
-		methodName := Title(method.Name)
+		methodName := goName(method.Name)
 		f := method.Function
 
 		var objectReturnType *schema.ObjectType
@@ -2527,7 +2539,7 @@ func (pkg *pkgContext) genResource(
 			fmt.Fprintf(w, "\t}\n")
 
 			// Get the name of the method to return the output
-			fmt.Fprintf(w, "\treturn %s.(%s).%s(), nil\n", resultVar, cgstrings.Camel(outputsType), Title(objectReturnType.Properties[0].Name))
+			fmt.Fprintf(w, "\treturn %s.(%s).%s(), nil\n", resultVar, cgstrings.Camel(outputsType), goName(objectReturnType.Properties[0].Name))
 		} else {
 			// Check the error before proceeding.
 			fmt.Fprintf(w, "\tif err != nil {\n")
@@ -2609,14 +2621,14 @@ func (pkg *pkgContext) genResource(
 					outputTypeName = pkg.genericOutputType(p.Type)
 				}
 				printCommentWithDeprecationMessage(w, p.Comment, p.DeprecationMessage, false)
-				fmt.Fprintf(w, "func (o %s%sResultOutput) %s() %s {\n", outputStructName, methodName, Title(p.Name),
+				fmt.Fprintf(w, "func (o %s%sResultOutput) %s() %s {\n", outputStructName, methodName, goName(p.Name),
 					outputTypeName)
 				if !useGenericVariant {
 					fmt.Fprintf(w, "\treturn o.ApplyT(func (v %s%sResult) %s { return v.%s }).(%s)\n", outputStructName, methodName,
-						pkg.typeString(codegen.ResolvedType(p.Type)), Title(p.Name), outputTypeName)
+						pkg.typeString(codegen.ResolvedType(p.Type)), goName(p.Name), outputTypeName)
 				} else {
 					fmt.Fprintf(w, "\treturn pulumix.Apply(o, func(v %s%sResult) %s { return v.%s })\n", outputStructName, methodName,
-						pkg.typeString(codegen.ResolvedType(p.Type)), Title(p.Name))
+						pkg.typeString(codegen.ResolvedType(p.Type)), goName(p.Name))
 				}
 
 				fmt.Fprintf(w, "}\n")
@@ -3548,9 +3560,9 @@ func (pkg *pkgContext) genResourceRegistrations(
 
 		if objectReturnType != nil {
 			if pkg.liftSingleValueMethodReturns && len(objectReturnType.Properties) == 1 {
-				fmt.Fprintf(w, "\tpulumi.RegisterOutputType(%s%sResultOutput{})\n", cgstrings.Camel(name), Title(method.Name))
+				fmt.Fprintf(w, "\tpulumi.RegisterOutputType(%s%sResultOutput{})\n", cgstrings.Camel(name), goName(method.Name))
 			} else {
-				fmt.Fprintf(w, "\tpulumi.RegisterOutputType(%s%sResultOutput{})\n", name, Title(method.Name))
+				fmt.Fprintf(w, "\tpulumi.RegisterOutputType(%s%sResultOutput{})\n", name, goName(method.Name))
 			}
 		}
 	}
@@ -3796,7 +3808,7 @@ func (pkg *pkgContext) genConfig(w io.Writer, variables []*schema.Property) erro
 		printCommentWithDeprecationMessage(w, p.Comment, p.DeprecationMessage, false)
 		configKey := fmt.Sprintf("\"%s:%s\"", pkg.pkg.Name(), cgstrings.Camel(p.Name))
 
-		fmt.Fprintf(w, "func Get%s(ctx *pulumi.Context) %s {\n", Title(p.Name), getType)
+		fmt.Fprintf(w, "func Get%s(ctx *pulumi.Context) %s {\n", goName(p.Name), getType)
 		if p.DefaultValue != nil {
 			fmt.Fprintf(w, "\tv, err := config.Try%s(ctx, %s)\n", funcType, configKey)
 			fmt.Fprintf(w, "\tif err == nil {\n")
@@ -4217,11 +4229,11 @@ func generatePackageContextMap(tool string, pkg schema.PackageReference, goInfo 
 
 		for _, method := range r.Methods {
 			if method.Function.Inputs != nil {
-				pkg.names.Add(rawResourceName(r) + Title(method.Name) + "Args")
+				pkg.names.Add(rawResourceName(r) + goName(method.Name) + "Args")
 			}
 			if method.Function.ReturnType != nil {
 				if _, ok := method.Function.ReturnType.(*schema.ObjectType); ok {
-					pkg.names.Add(rawResourceName(r) + Title(method.Name) + "Result")
+					pkg.names.Add(rawResourceName(r) + goName(method.Name) + "Result")
 				}
 			}
 		}
