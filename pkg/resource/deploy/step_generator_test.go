@@ -916,7 +916,9 @@ func TestStepGenerator(t *testing.T) {
 
 			provider := &deploytest.Provider{
 				Package: tokens.Package("provider"),
-				CheckConfigF: func(urn resource.URN, olds, news resource.PropertyMap, allowUnknowns bool) (resource.PropertyMap, []plugin.CheckFailure, error) {
+				CheckConfigF: func(urn resource.URN, olds, news resource.PropertyMap, allowUnknowns bool) (
+					resource.PropertyMap, []plugin.CheckFailure, error,
+				) {
 					return news, nil, nil
 				},
 				ConfigureF: func(news resource.PropertyMap) error {
@@ -937,7 +939,7 @@ func TestStepGenerator(t *testing.T) {
 			inputs["version"] = resource.NewPropertyValue("1.0.0")
 			inputs, _, err = d.providers.Check(resource.URN(providerUrn), nil, inputs, false, nil)
 			assert.NoError(t, err)
-			providerId, _, _, err := d.providers.Create(resource.URN(providerUrn), inputs, -1, true)
+			providerID, _, _, err := d.providers.Create(resource.URN(providerUrn), inputs, -1, true)
 			assert.NoError(t, err)
 
 			sg := newStepGenerator(d, Options{})
@@ -959,7 +961,7 @@ func TestStepGenerator(t *testing.T) {
 				{
 					desc:     "Both are default",
 					old:      providerPrefix + "default_foo::uuid1",
-					new:      providerPrefix + "default_foo::" + providerId.String(),
+					new:      providerPrefix + "default_foo::" + providerID.String(),
 					expected: false,
 					//`errContains: "failed to resolve provider reference",
 				},
