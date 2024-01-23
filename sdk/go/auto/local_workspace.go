@@ -850,7 +850,7 @@ func NewLocalWorkspace(ctx context.Context, opts ...LocalWorkspaceOption) (Works
 	if lwOpts.PulumiCommand != nil {
 		pulumiCommand = lwOpts.PulumiCommand
 	} else {
-		p, err := NewPulumiCommand(skipVersionCheck(optOut))
+		p, err := NewPulumiCommand(&PulumiCommandOptions{skipVersionCheck: optOut})
 		if err != nil {
 			return nil, err
 		}
