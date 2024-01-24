@@ -135,7 +135,7 @@ class PulumiCommand:
 
     @classmethod
     def _install_windows(cls, root: str, version: VersionInfo):
-        # TODO: Once we're on python 3.12 we can use a `with` context manager with `delete_on_close=True` and `delete=True` here
+        # TODO: Once we're on python 3.12 we can use a `with` context manager with `delete_on_close=False` and `delete=True` here
         # pylint: disable-next=consider-using-with
         script = tempfile.NamedTemporaryFile(delete=False, suffix=".ps1")
         try:
