@@ -1381,8 +1381,10 @@ func TestStreamInvoke(t *testing.T) {
 
 		mon, err := newResourceMonitor(&evalSource{
 			runinfo: &EvalRunInfo{
-				Proj:   &workspace.Project{Name: "proj"},
-				Target: &Target{},
+				Proj: &workspace.Project{Name: "proj"},
+				Target: &Target{
+					Name: tokens.MustParseStackName("stack"),
+				},
 			},
 			plugctx: plugctx,
 		}, &providerSourceMock{
@@ -1438,8 +1440,10 @@ func TestStreamInvoke(t *testing.T) {
 
 		mon, err := newResourceMonitor(&evalSource{
 			runinfo: &EvalRunInfo{
-				Proj:   &workspace.Project{Name: "proj"},
-				Target: &Target{},
+				Proj: &workspace.Project{Name: "proj"},
+				Target: &Target{
+					Name: tokens.MustParseStackName("stack"),
+				},
 			},
 			plugctx: plugctx,
 		}, &providerSourceMock{
@@ -1494,8 +1498,10 @@ func TestStreamInvoke(t *testing.T) {
 
 		mon, err := newResourceMonitor(&evalSource{
 			runinfo: &EvalRunInfo{
-				Proj:   &workspace.Project{Name: "proj"},
-				Target: &Target{},
+				Proj: &workspace.Project{Name: "proj"},
+				Target: &Target{
+					Name: tokens.MustParseStackName("stack"),
+				},
 			},
 			plugctx: plugctx,
 		}, &providerSourceMock{
@@ -1566,8 +1572,10 @@ func TestStreamInvoke(t *testing.T) {
 		providerRegChan := make(chan *registerResourceEvent, 100)
 		mon, err := newResourceMonitor(&evalSource{
 			runinfo: &EvalRunInfo{
-				Proj:   &workspace.Project{Name: "proj"},
-				Target: &Target{},
+				Proj: &workspace.Project{Name: "proj"},
+				Target: &Target{
+					Name: tokens.MustParseStackName("stack"),
+				},
 			},
 			plugctx: plugctx,
 		}, reg, providerRegChan, nil, nil, Options{}, nil, nil, opentracing.SpanFromContext(context.Background()))
@@ -2270,8 +2278,10 @@ func TestInvoke(t *testing.T) {
 
 		mon, err := newResourceMonitor(&evalSource{
 			runinfo: &EvalRunInfo{
-				Proj:   &workspace.Project{Name: "proj"},
-				Target: &Target{},
+				Proj: &workspace.Project{Name: "proj"},
+				Target: &Target{
+					Name: tokens.MustParseStackName("stack"),
+				},
 			},
 			plugctx: plugctx,
 		}, &providerSourceMock{
@@ -2323,8 +2333,10 @@ func TestInvoke(t *testing.T) {
 
 		mon, err := newResourceMonitor(&evalSource{
 			runinfo: &EvalRunInfo{
-				Proj:   &workspace.Project{Name: "proj"},
-				Target: &Target{},
+				Proj: &workspace.Project{Name: "proj"},
+				Target: &Target{
+					Name: tokens.MustParseStackName("stack"),
+				},
 			},
 			plugctx: plugctx,
 		}, &providerSourceMock{
@@ -2397,8 +2409,10 @@ func TestCall(t *testing.T) {
 
 		mon, err := newResourceMonitor(&evalSource{
 			runinfo: &EvalRunInfo{
-				Proj:   &workspace.Project{Name: "proj"},
-				Target: &Target{},
+				Proj: &workspace.Project{Name: "proj"},
+				Target: &Target{
+					Name: tokens.MustParseStackName("stack"),
+				},
 			},
 			plugctx: plugctx,
 		}, &providerSourceMock{
