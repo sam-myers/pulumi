@@ -149,7 +149,10 @@ func (h *L2ResourceSimpleLanguageHost) GetRequiredPlugins(
 func (h *L2ResourceSimpleLanguageHost) InstallDependencies(
 	req *pulumirpc.InstallDependenciesRequest, server pulumirpc.LanguageRuntime_InstallDependenciesServer,
 ) error {
-	if req.Info.ProgramDirectory != filepath.Join(h.tempDir, "projects", "l2-resource-simple") {
+	if req.Info.RootDirectory != filepath.Join(h.tempDir, "projects", "l2-resource-simple") {
+		return fmt.Errorf("unexpected directory to install dependencies %s", req.Info.RootDirectory)
+	}
+	if req.Info.ProgramDirectory != req.Info.RootDirectory {
 		return fmt.Errorf("unexpected directory to install dependencies %s", req.Info.ProgramDirectory)
 	}
 	return nil
@@ -268,9 +271,10 @@ func TestL2SimpleResource_BadSnapshot(t *testing.T) {
 	t.Logf("stdout: %s", runResponse.Stdout)
 	t.Logf("stderr: %s", runResponse.Stderr)
 	assert.False(t, runResponse.Success)
-	assert.Equal(t, []string{
-		"sdk snapshot validation for simple failed:\nexpected file test.txt does not match actual file",
-	}, runResponse.Messages)
+	assert.Equal(t, 1, len(runResponse.Messages))
+	assert.Contains(t,
+		runResponse.Messages[0],
+		"sdk snapshot validation for simple failed:\nexpected file test.txt does not match actual file")
 }
 
 // Run a simple failing test because of a bad project snapshot with a mocked runtime.
@@ -356,5 +360,5 @@ func TestL2SimpleResource_MissingRequiredPlugins(t *testing.T) {
 	failureMessage := runResponse.Messages[0]
 	assert.Contains(t, failureMessage,
 		"expected no error, got Error: unexpected required plugins: "+
-			"actual [language-mock@<nil>], expected [language-mock@<nil> resource-simple@1.0.0]")
+			"actual Set{language-mock@<nil>}, expected Set{language-mock@<nil>, resource-simple@1.0.0}")
 }

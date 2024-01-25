@@ -428,7 +428,7 @@ func TestRunLangPlugin(t *testing.T) {
 		assert.ErrorContains(t, runLangPlugin(&querySource{
 			plugctx: &plugin.Context{
 				Host: &mockHost{
-					LanguageRuntimeF: func(root, pwd, runtime string, options map[string]interface{}) (plugin.LanguageRuntime, error) {
+					LanguageRuntimeF: func(runtime string, info plugin.ProgramInfo) (plugin.LanguageRuntime, error) {
 						return nil, errors.New("expected error")
 					},
 				},
@@ -446,7 +446,7 @@ func TestRunLangPlugin(t *testing.T) {
 		err := runLangPlugin(&querySource{
 			plugctx: &plugin.Context{
 				Host: &mockHost{
-					LanguageRuntimeF: func(root, pwd, runtime string, options map[string]interface{}) (plugin.LanguageRuntime, error) {
+					LanguageRuntimeF: func(runtime string, info plugin.ProgramInfo) (plugin.LanguageRuntime, error) {
 						return &mockLanguageRuntime{}, nil
 					},
 				},
@@ -477,7 +477,7 @@ func TestRunLangPlugin(t *testing.T) {
 		err := runLangPlugin(&querySource{
 			plugctx: &plugin.Context{
 				Host: &mockHost{
-					LanguageRuntimeF: func(root, pwd, runtime string, options map[string]interface{}) (plugin.LanguageRuntime, error) {
+					LanguageRuntimeF: func(runtime string, info plugin.ProgramInfo) (plugin.LanguageRuntime, error) {
 						return &mockLanguageRuntime{
 							RunF: func(info plugin.RunInfo) (string, bool, error) {
 								return "bail should override progerr", true /* bail */, nil
@@ -503,7 +503,7 @@ func TestRunLangPlugin(t *testing.T) {
 		err := runLangPlugin(&querySource{
 			plugctx: &plugin.Context{
 				Host: &mockHost{
-					LanguageRuntimeF: func(root, pwd, runtime string, options map[string]interface{}) (plugin.LanguageRuntime, error) {
+					LanguageRuntimeF: func(runtime string, info plugin.ProgramInfo) (plugin.LanguageRuntime, error) {
 						return &mockLanguageRuntime{
 							RunF: func(info plugin.RunInfo) (string, bool, error) {
 								return "expected progerr", false /* bail */, nil
@@ -530,7 +530,7 @@ func TestRunLangPlugin(t *testing.T) {
 		err := runLangPlugin(&querySource{
 			plugctx: &plugin.Context{
 				Host: &mockHost{
-					LanguageRuntimeF: func(root, pwd, runtime string, options map[string]interface{}) (plugin.LanguageRuntime, error) {
+					LanguageRuntimeF: func(runtime string, p plugin.ProgramInfo) (plugin.LanguageRuntime, error) {
 						return &mockLanguageRuntime{
 							RunF: func(info plugin.RunInfo) (string, bool, error) {
 								runCalled = true
@@ -538,7 +538,7 @@ func TestRunLangPlugin(t *testing.T) {
 								assert.Equal(t, "expected-stack", info.Stack)
 								assert.Equal(t, "expected-project", info.Project)
 								assert.Equal(t, "expected-pwd", info.Pwd)
-								assert.Equal(t, "expected-program", info.Program)
+								assert.Equal(t, "expected-program", p.EntryPoint())
 								assert.Equal(t, []string{"expected", "args"}, info.Args)
 								assert.Equal(t, "secret-value", info.Config[config.MustMakeKey("test", "secret")])
 								assert.Equal(t, "regular-value", info.Config[config.MustMakeKey("test", "regular")])
@@ -603,7 +603,7 @@ type mockHost struct {
 
 	CloseProviderF func(provider plugin.Provider) error
 
-	LanguageRuntimeF func(root, pwd, runtime string, options map[string]interface{}) (plugin.LanguageRuntime, error)
+	LanguageRuntimeF func(language string, info plugin.ProgramInfo) (plugin.LanguageRuntime, error)
 
 	EnsurePluginsF func(plugins []workspace.PluginSpec, kinds plugin.Flags) error
 
@@ -678,11 +678,9 @@ func (h *mockHost) CloseProvider(provider plugin.Provider) error {
 	panic("unimplemented")
 }
 
-func (h *mockHost) LanguageRuntime(
-	root, pwd, runtime string, options map[string]interface{},
-) (plugin.LanguageRuntime, error) {
+func (h *mockHost) LanguageRuntime(runtime string, info plugin.ProgramInfo) (plugin.LanguageRuntime, error) {
 	if h.LanguageRuntimeF != nil {
-		return h.LanguageRuntimeF(root, pwd, runtime, options)
+		return h.LanguageRuntimeF(runtime, info)
 	}
 	panic("unimplemented")
 }
@@ -728,18 +726,18 @@ func (h *mockHost) Close() error {
 type mockLanguageRuntime struct {
 	CloseF func() error
 
-	GetRequiredPluginsF func(info plugin.ProgInfo) ([]workspace.PluginSpec, error)
+	GetRequiredPluginsF func(info plugin.ProgramInfo) ([]workspace.PluginSpec, error)
 
 	RunF func(info plugin.RunInfo) (string, bool, error)
 
 	GetPluginInfoF func() (workspace.PluginInfo, error)
 
-	InstallDependenciesF func(pwd, main string) error
+	InstallDependenciesF func(info plugin.ProgramInfo) error
 
 	AboutF func() (plugin.AboutInfo, error)
 
 	GetProgramDependenciesF func(
-		info plugin.ProgInfo, transitiveDependencies bool,
+		info plugin.ProgramInfo, transitiveDependencies bool,
 	) ([]plugin.DependencyInfo, error)
 
 	RunPluginF func(
@@ -777,7 +775,7 @@ func (rt *mockLanguageRuntime) Close() error {
 	panic("unimplemented")
 }
 
-func (rt *mockLanguageRuntime) GetRequiredPlugins(info plugin.ProgInfo) ([]workspace.PluginSpec, error) {
+func (rt *mockLanguageRuntime) GetRequiredPlugins(info plugin.ProgramInfo) ([]workspace.PluginSpec, error) {
 	if rt.GetRequiredPluginsF != nil {
 		return rt.GetRequiredPluginsF(info)
 	}
@@ -798,9 +796,9 @@ func (rt *mockLanguageRuntime) GetPluginInfo() (workspace.PluginInfo, error) {
 	panic("unimplemented")
 }
 
-func (rt *mockLanguageRuntime) InstallDependencies(pwd, main string) error {
+func (rt *mockLanguageRuntime) InstallDependencies(info plugin.ProgramInfo) error {
 	if rt.InstallDependenciesF != nil {
-		return rt.InstallDependenciesF(pwd, main)
+		return rt.InstallDependenciesF(info)
 	}
 	panic("unimplemented")
 }
@@ -813,7 +811,7 @@ func (rt *mockLanguageRuntime) About() (plugin.AboutInfo, error) {
 }
 
 func (rt *mockLanguageRuntime) GetProgramDependencies(
-	info plugin.ProgInfo, transitiveDependencies bool,
+	info plugin.ProgramInfo, transitiveDependencies bool,
 ) ([]plugin.DependencyInfo, error) {
 	if rt.GetProgramDependenciesF != nil {
 		return rt.GetProgramDependenciesF(info, transitiveDependencies)

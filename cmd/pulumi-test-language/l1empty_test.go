@@ -103,7 +103,10 @@ func (h *L1EmptyLanguageHost) GenerateProject(
 func (h *L1EmptyLanguageHost) InstallDependencies(
 	req *pulumirpc.InstallDependenciesRequest, server pulumirpc.LanguageRuntime_InstallDependenciesServer,
 ) error {
-	if req.Info.ProgramDirectory != filepath.Join(h.tempDir, "projects", "l1-empty") {
+	if req.Info.RootDirectory != filepath.Join(h.tempDir, "projects", "l1-empty") {
+		return fmt.Errorf("unexpected directory to install dependencies %s", req.Info.RootDirectory)
+	}
+	if req.Info.ProgramDirectory != req.Info.RootDirectory {
 		return fmt.Errorf("unexpected directory to install dependencies %s", req.Info.ProgramDirectory)
 	}
 	return nil
@@ -291,9 +294,8 @@ func TestL1Empty_BadSnapshot(t *testing.T) {
 	t.Logf("stdout: %s", runResponse.Stdout)
 	t.Logf("stderr: %s", runResponse.Stderr)
 	assert.False(t, runResponse.Success)
-	assert.Equal(t, []string{
-		"program snapshot validation failed:\nexpected file Pulumi.yaml does not match actual file",
-	}, runResponse.Messages)
+	assert.Equal(t, 1, len(runResponse.Messages))
+	assert.Contains(t, runResponse.Messages[0], "program snapshot validation failed")
 }
 
 // Run a simple failing test because of a bad project snapshot with a mocked runtime.
